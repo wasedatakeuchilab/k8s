@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: photo-luminescence-cleanup
+spec:
+  timeZone: Asia/Tokyo
+  schedule: "* 10 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: photo-luminescence-cleanup
+            image: busybox:1.34.1
+            volumeMounts:
+              - mountPath: /mnt
+                name: upload
+            command:
+              - /bin/sh
+              - -c
+            args:
+              - ls -d /mnt/* | xargs rm -r
+          restartPolicy: Never
+          volumes:
+          - name: upload
+            persistentVolumeClaim:
+              claimName: photo-luminescence

@@ -1,0 +1,11 @@
+bases:
+  - ../../base
+commonLabels:
+  env: production
+patches:
+  - config-map.yml
+  - deployment.yml
+  - ingress.yml
+resources:
+  - cronjob.yml
+  - persistent-volume-claim.yml

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: photo-luminescence
+spec:
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteMany  # 3 or more nodes in production-env

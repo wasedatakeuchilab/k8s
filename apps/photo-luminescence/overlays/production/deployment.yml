@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: photo-luminescence
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: photo-luminescence
+  template:
+    spec:
+      containers:
+        - name: photo-luminescence
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 500m
+          volumeMounts:
+            - name: upload
+              mountPath: /tmp/upload
+      volumes:
+        - name: upload
+          persistentVolumeClaim:
+            claimName: photo-luminescence

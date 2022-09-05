@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: photo-luminescence
+data:
+  # Gunicorn configuration
+  # See also https://docs.gunicorn.org/en/latest/configure.html
+  gunicorn.conf: |
+    wsgi_app = "webapp_photo_luminescence:server"
+    bind = "0.0.0.0:8080"

@@ -1,0 +1,162 @@
+apiVersion: v1
+data:
+  gunicorn.conf: |
+    import os
+    wsgi_app = "webapp_photo_luminescence:server"
+    workers = os.cpu_count()
+    bind = "0.0.0.0:8080"
+    raw_env = [
+        "URL_BASE_PATH=/PL/",  # Must be the same as ingress path
+        "UPLOAD_BASEDIR=/tmp/upload",
+    ]
+kind: ConfigMap
+metadata:
+  labels:
+    app: photo-luminescence
+    env: production
+  name: photo-luminescence
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: photo-luminescence
+    env: production
+  name: photo-luminescence
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: photo-luminescence
+    env: production
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    env: production
+  name: photo-luminescence
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: nfs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: photo-luminescence
+    env: production
+  name: photo-luminescence
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: photo-luminescence
+      env: production
+  template:
+    metadata:
+      labels:
+        app: photo-luminescence
+        env: production
+    spec:
+      containers:
+      - command:
+        - gunicorn
+        - --config
+        - /conf.d/config.py
+        image: wasedatakeuchilab/webapp-photo-luminescence:0.3.0
+        name: photo-luminescence
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /tmp/upload
+          name: upload
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /conf.d
+          name: config
+          readOnly: true
+      volumes:
+      - name: upload
+        persistentVolumeClaim:
+          claimName: photo-luminescence
+      - emptyDir: {}
+        name: tmp
+      - configMap:
+          items:
+          - key: gunicorn.conf
+            path: config.py
+          name: photo-luminescence
+        name: config
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  labels:
+    env: production
+  name: photo-luminescence-cleanup
+spec:
+  jobTemplate:
+    metadata:
+      labels:
+        env: production
+    spec:
+      template:
+        metadata:
+          labels:
+            env: production
+        spec:
+          containers:
+          - args:
+            - ls -d /mnt/* | xargs rm -r
+            command:
+            - /bin/sh
+            - -c
+            image: busybox:1.34.1
+            name: photo-luminescence-cleanup
+            volumeMounts:
+            - mountPath: /mnt
+              name: upload
+          restartPolicy: Never
+          volumes:
+          - name: upload
+            persistentVolumeClaim:
+              claimName: photo-luminescence
+  schedule: '* 10 * * *'
+  timeZone: Asia/Tokyo
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: photo-luminescence
+    env: production
+    name: photo-luminescence
+  name: photo-luminescence
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: photo-luminescence
+            port:
+              number: 80
+        path: /PL/
+        pathType: Prefix

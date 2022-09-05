@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: photo-luminescence
+data:
+  gunicorn.conf: |
+    wsgi_app = "webapp_photo_luminescence:server"
+    workers = 1
+    bind = "0.0.0.0:8080"
+    raw_env = [
+        "URL_BASE_PATH=/",
+        "UPLOAD_BASEDIR=/tmp/upload",
+    ]

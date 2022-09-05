@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: photo-luminescence
+spec:
+  selector:
+    matchLabels:
+      app: photo-luminescence
+  template:
+    metadata:
+      labels:
+        app: photo-luminescence
+    spec:
+      containers:
+        - name: photo-luminescence
+          image: wasedatakeuchilab/webapp-photo-luminescence:0.3.0
+          command:
+            - gunicorn
+            - --config
+            - /conf.d/config.py
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 500m
+            limits:
+              memory: 512Mi
+              cpu: 500m
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /conf.d
+              readOnly: true
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: photo-luminescence
+            items:
+              - key: gunicorn.conf
+                path: config.py
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: photo-luminescence
+spec:
+  selector:
+    app: photo-luminescence
+  ports:
+  - port: 80
+    targetPort: 8080

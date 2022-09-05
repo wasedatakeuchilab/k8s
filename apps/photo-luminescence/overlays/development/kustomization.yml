@@ -1,0 +1,6 @@
+bases:
+  - ../../base
+commonLabels:
+  env: development
+patches:
+  - config-map.yml

@@ -1,0 +1,6 @@
+commonLabels:
+  app: photo-luminescence
+resources:
+  - config-map.yml
+  - deployment.yml
+  - ingress.yml

@@ -1,0 +1,93 @@
+apiVersion: v1
+data:
+  gunicorn.conf: |
+    wsgi_app = "webapp_photo_luminescence:server"
+    bind = "0.0.0.0:8080"
+kind: ConfigMap
+metadata:
+  labels:
+    app: photo-luminescence
+  name: photo-luminescence
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: photo-luminescence
+  name: photo-luminescence
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: photo-luminescence
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: photo-luminescence
+  name: photo-luminescence
+spec:
+  selector:
+    matchLabels:
+      app: photo-luminescence
+  template:
+    metadata:
+      labels:
+        app: photo-luminescence
+    spec:
+      containers:
+      - command:
+        - gunicorn
+        - --config
+        - /conf.d/config.py
+        image: wasedatakeuchilab/webapp-photo-luminescence:0.3.0
+        name: photo-luminescence
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /conf.d
+          name: config
+          readOnly: true
+      volumes:
+      - emptyDir: {}
+        name: tmp
+      - configMap:
+          items:
+          - key: gunicorn.conf
+            path: config.py
+          name: photo-luminescence
+        name: config
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: photo-luminescence
+    name: photo-luminescence
+  name: photo-luminescence
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: photo-luminescence
+            port:
+              number: 80
+        path: /
+        pathType: Prefix

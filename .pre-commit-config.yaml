@@ -9,7 +9,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/stackrox/kube-linter
-    rev: v0.4.0
+    rev: 0.5.0
     hooks:
       - id: kube-linter-system
         args:

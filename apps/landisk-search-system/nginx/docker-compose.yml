@@ -1,0 +1,17 @@
+---
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:1.23.1
+    ports:
+      - 8080:80
+    volumes:
+      - type: bind
+        source: /mnt/landisk  # TODO: Fix hard coding
+        target: /usr/share/nginx/html
+        read_only: true
+      - type: bind
+        source: ./default.conf
+        target: /etc/nginx/conf.d/default.conf
+    restart: unless-stopped

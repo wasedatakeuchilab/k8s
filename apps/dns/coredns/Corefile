@@ -1,0 +1,38 @@
+# See documentation: https://coredns.io/manual/configuration/
+. {
+    # Data analysis web application
+    template IN A dawa.local {
+        match "^([^\.]+)\.dawa\.local\.$"
+        answer "{{ index .Match 1 }}.dawa.local IN A 192.168.0.101"
+    }
+    # landisk search system
+    template IN A landisk.local {
+        match "^([^\.]+)\.landisk\.local\.$"
+        answer "{{ index .Match 1 }}.landisk.local IN A 192.168.0.101"
+    }
+    # ECK
+    template IN A eck.local {
+        match "^([^\.]+)\.eck\.local\.$"
+        answer "{{ index .Match 1 }}.eck.local. IN A 192.168.0.101"
+    }
+    # K8s
+    template IN A k8s.local {
+        match "^([^\.]+)\.k8s\.local\.$"
+        answer "{{ index .Match 1 }}.k8s.local. IN A 192.168.0.101"
+    }
+    hosts {
+        # Node IPs
+        192.168.0.50 titan
+        192.168.0.51 colossus
+        192.168.0.52 behemoth
+        fallthrough
+    }
+    cache 30
+    errors
+    forward . 133.9.61.161
+    health
+    log
+    ready
+    reload
+    whoami
+}

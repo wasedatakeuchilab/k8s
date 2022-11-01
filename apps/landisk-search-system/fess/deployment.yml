@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fess
+  annotations:
+    kube-score/ignore: |
+      container-security-context-readonlyrootfilesystem,
+      container-security-context-user-group-id,
+      pod-networkpolicy,
+spec:
+  selector:
+    matchLabels:
+      app: fess
+  replicas: 1  # replicas must be 1 or you cannot log in (untracked bug).
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: fess
+    spec:
+      containers:
+        - name: fess
+          image: ghcr.io/codelibs/fess:14.3.0
+          imagePullPolicy: Always
+          env:
+            - name: FESS_DICTIONARY_PATH
+              value: /usr/share/elasticsearch/config/dictionary/
+          envFrom:
+            - configMapRef:
+                name: elasticsearch
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: 2000m
+              ephemeral-storage: 1Gi
+            requests:
+              memory: 125Mi
+              cpu: 100m
+              ephemeral-storage: 1Gi
+          securityContext:
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
+          readinessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+---
+# HELP: How to pass kube-score with Service seperated as file
+apiVersion: v1
+kind: Service
+metadata:
+  name: fess
+spec:
+  selector:
+    app: fess
+  ports:
+    - port: 8080
+      name: http

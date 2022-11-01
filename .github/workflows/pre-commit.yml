@@ -1,0 +1,32 @@
+---
+# pre-commit/action is deprecated.
+# See https://github.com/marketplace/actions/pre-commit.
+#
+# But we have to use it because pre-commit.ci doesn't
+# seem to support Docker hooks currently on 30/09/2022.
+#
+# We are using the following Docker hooks
+# - shellcheck (https://github.com/koalaman/shellcheck-precommit)
+# - shell-fmt (https://github.com/pecigonzalo/pre-commit-shfmt)
+# - kubeconform (https://github.com/yannh/kubeconform)
+# - kube-score (https://github.com/zegl/kube-score)
+
+name: pre-commit
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+      - uses: pre-commit/action@v3.0.0

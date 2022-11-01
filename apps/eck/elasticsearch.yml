@@ -1,0 +1,41 @@
+---
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+spec:
+  version: 8.4.3
+  nodeSets:
+    - name: master
+      count: 1
+      config:
+        node.store.allow_mmap: false
+        xpack.security.enabled: false
+      podTemplate:
+        spec:
+          initContainers:
+            - name: install-plugins
+              command:
+                - sh
+                - -c
+                - |
+                  bin/elasticsearch-plugin install --batch \
+                  http://www.landisk.local/elasticsearch/plugins/analysis-kuromoji/analysis-kuromoji-8.4.3.zip;
+                  bin/elasticsearch-plugin install --batch \
+                  http://www.landisk.local/elasticsearch/plugins/analysis-nori/analysis-nori-8.4.3.zip;
+                  bin/elasticsearch-plugin install --batch \
+                  http://www.landisk.local/elasticsearch/plugins/analysis-smartcn/analysis-smartcn-8.4.3.zip;
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            storageClassName: nfs
+            accessModes:
+              - ReadWriteMany
+            resources:
+              requests:
+                storage: 10Gi
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true

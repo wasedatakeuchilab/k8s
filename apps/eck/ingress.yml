@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana
+  labels:
+    name: kibana
+  annotations:
+    kube-score/ignore: |
+      ingress-targets-service
+spec:
+  rules:
+    - host: kibana.eck.local
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: kibana-kb-http
+                port:
+                  number: 5601

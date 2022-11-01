@@ -1,0 +1,66 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: check-yaml
+        args:
+          - --unsafe
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.2.2
+    hooks:
+      - id: yamlfmt
+        args:
+          - --mapping=2
+          - --sequence=4
+          - --offset=2
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.28.0
+    hooks:
+      - id: yamllint
+        args:
+          - --format=parsable
+  - repo: local
+    hooks:
+      - id: shfmt
+        name: shfmt
+        language: docker_image
+        entry: docker.io/mvdan/shfmt:v3.5.1
+        types:
+          - shell
+        args:
+          - -i=2
+      - id: shellcheck
+        name: shellcheck
+        language: docker_image
+        entry: docker.io/koalaman/shellcheck:v0.8.0
+        types:
+          - shell
+      - id: kubeconform
+        name: kubeconform
+        language: docker_image
+        entry: ghcr.io/yannh/kubeconform:v0.5.0-alpine
+        files: apps\/(.+)\.yml
+        exclude: docker-compose.yml
+        args:
+          - -ignore-missing-schemas
+          - -strict
+      - id: kube-score
+        name: kube-score
+        language: docker_image
+        entry: zegl/kube-score:v1.14.0
+        files: apps\/(.+)\.yml
+        exclude: docker-compose.yml
+        args:
+          - score
+ci:
+  autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
+  autoupdate_commit_msg: ⬆ [pre-commit.ci] pre-commit autoupdate
+  skip:
+    # Docker image hooks
+    - shellcheck
+    - shfmt
+    - kubeconform
+    - kube-score

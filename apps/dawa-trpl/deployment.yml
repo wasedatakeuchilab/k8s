@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dawa-trpl
+  annotations:
+    kube-score/ignore: |
+      container-security-context-readonlyrootfilesystem,
+      container-security-context-user-group-id,
+      pod-networkpolicy,
+spec:
+  selector:
+    matchLabels:
+      app: dawa-trpl
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: dawa-trpl
+    spec:
+      containers:
+        - name: dawa-trpl
+          image: ghcr.io/wasedatakeuchilab/dawa-trpl:0.5.0
+          imagePullPolicy: Always
+          env:
+            - name: UPLOAD_BASEDIR
+              value: /upload
+          ports:
+            - containerPort: 8080
+              name: http
+          command:
+            - uvicorn
+            - dawa_trpl:server
+            - --host=0.0.0.0
+            - --port=8080
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: upload
+              mountPath: /upload
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 2000m
+              ephemeral-storage: 2Gi
+            requests:
+              memory: 128Mi
+              cpu: 100m
+              ephemeral-storage: 500Mi
+          securityContext:
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+      volumes:
+        - name: tmp
+          emptyDir:
+        - name: upload
+          persistentVolumeClaim:
+            claimName: dawa-trpl-upload
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dawa-trpl
+spec:
+  selector:
+    app: dawa-trpl
+  ports:
+    - port: 8080
+      name: http

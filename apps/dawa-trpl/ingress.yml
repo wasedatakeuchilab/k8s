@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dawa-trpl
+  labels:
+    name: dawa-trpl
+spec:
+  rules:
+    - host: trpl.dawa.local
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: dawa-trpl
+                port:
+                  number: 8080

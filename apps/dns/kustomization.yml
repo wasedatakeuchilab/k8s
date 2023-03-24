@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lab-system
+
+resources:
+  - coredns.yml
+  # HELP: Deploy external-dns with etcd
+  # GitHub: https://github.com/kubernetes-sigs/external-dns
+  # - etcd
+  # - external-dns
+
+configMapGenerator:
+  - name: coredns-config
+    files:
+      - Corefile

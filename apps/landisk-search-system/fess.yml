@@ -1,0 +1,102 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fess
+  annotations:
+    kube-score/ignore: |
+      container-security-context-readonlyrootfilesystem,
+      container-security-context-user-group-id,
+      pod-networkpolicy,
+spec:
+  selector:
+    matchLabels:
+      app: fess
+  replicas: 1 # replicas must be 1 or you cannot log in (untracked bug).
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: fess
+    spec:
+      containers:
+        - name: fess
+          image: ghcr.io/codelibs/fess:14.6.1
+          imagePullPolicy: Always
+          env:
+            - name: FESS_DICTIONARY_PATH
+              value: /usr/share/elasticsearch/config/dictionary/
+            - name: ES_HTTP_URL
+              value: http://elasticsearch-es-http.eck.svc:9200
+            - name: ES_USERNAME
+              value: elastic
+            - name: ES_TYPE
+              value: cloud
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: 2000m
+              ephemeral-storage: 1Gi
+            requests:
+              memory: 125Mi
+              cpu: 100m
+              ephemeral-storage: 1Gi
+          securityContext:
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
+          readinessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fess
+spec:
+  selector:
+    app: fess
+  ports:
+    - port: 8080
+      name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fess
+  labels:
+    name: fess
+spec:
+  rules:
+    - host: fess.landisk.lab
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: fess
+                port:
+                  number: 8080
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fess
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: fess

@@ -1,0 +1,4 @@
+*
+!.gitignore
+!devcontainer.json
+!install-kubectl.sh

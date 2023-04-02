@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coredns
+  annotations:
+    kube-score/ignore: |
+      container-security-context-user-group-id,
+      pod-networkpolicy,
+spec:
+  selector:
+    matchLabels:
+      app: coredns
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: coredns
+    spec:
+      containers:
+        - name: coredns
+          image: coredns/coredns:1.10.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 53
+              protocol: UDP
+          volumeMounts:
+            - mountPath: /etc/coredns
+              name: config
+          command:
+            - /coredns
+            - -conf
+            - /etc/coredns/Corefile
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 1000m
+              ephemeral-storage: 1Gi
+            requests:
+              memory: 64Mi
+              cpu: 125m
+          securityContext:
+            readOnlyRootFilesystem: true
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ready
+              port: 8181
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: coredns-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coredns
+spec:
+  selector:
+    app: coredns
+  ports:
+    - port: 53
+      protocol: UDP
+      name: dns
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.100
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: coredns
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: coredns

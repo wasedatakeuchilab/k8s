@@ -7,9 +7,4 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: eck
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: landisk-search-system

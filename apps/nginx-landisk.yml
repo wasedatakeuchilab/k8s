@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Endpoints
 metadata:
-  name: landisk-nginx
+  name: nginx-landisk
 subsets:
   - addresses:
       - ip: 192.168.0.50
@@ -15,7 +15,7 @@ subsets:
 apiVersion: v1
 kind: Service
 metadata:
-  name: landisk-nginx
+  name: nginx-landisk
   annotations:
     kube-score/ignore: |
       service-targets-pod
@@ -28,9 +28,9 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx
+  name: nginx-landisk
   labels:
-    name: nginx
+    name: nginx-landisk
 spec:
   rules:
     - host: www.landisk.lab
@@ -40,6 +40,6 @@ spec:
             path: /
             backend:
               service:
-                name: landisk-nginx
+                name: nginx-landisk
                 port:
                   number: 8080

@@ -1,0 +1,98 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch
+  annotations:
+    kube-score/ignore: |
+      container-security-context-readonlyrootfilesystem,
+      container-security-context-user-group-id,
+      pod-networkpolicy,
+      statefulset-has-servicename,
+spec:
+  selector:
+    matchLabels:
+      app: opensearch
+  serviceName: opensearch
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: opensearch
+    spec:
+      containers:
+        - name: opensearch
+          image: ghcr.io/codelibs/fess-opensearch:2.8.0
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: opensearch-config
+          ports:
+            - containerPort: 9200
+              name: http
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/opensearch/data
+            - name: dictionary
+              mountPath: /usr/share/opensearch/config/dictionary
+          resources:
+            limits:
+              memory: 4Gi
+              cpu: 2000m
+              ephemeral-storage: 1Gi
+            requests:
+              memory: 2Gi
+              cpu: 1000m
+              ephemeral-storage: 1Gi
+          readinessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 9200
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: nfs
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 5Gi
+    - metadata:
+        name: dictionary
+      spec:
+        storageClassName: nfs
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch
+spec:
+  selector:
+    app: opensearch
+  ports:
+    - port: 9200
+      name: http
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opensearch-config
+data:
+  node.name: manager
+  discovery.seed_hosts: manager
+  cluster.initial_cluster_manager_nodes: manager
+  cluster.name: opensearch-for-fess
+  node.roles: cluster_manager,data,ingest,ml
+  node.store.allow_mmap: 'false'
+  plugins.security.disabled: 'true'
+  OPENSEARCH_JAVA_OPTS: -Xms1g -Xmx1g
+  FESS_DICTIONARY_PATH: /usr/share/opensearch/config/dictionary

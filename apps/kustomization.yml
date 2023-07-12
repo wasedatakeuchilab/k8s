@@ -7,6 +7,3 @@ resources:
   - metallb.yml
   - namespace.yml
   - nginx-ingress-service.yml
-  # Elasticsearch
-  - https://download.elastic.co/downloads/eck/2.4.0/crds.yaml
-  - https://download.elastic.co/downloads/eck/2.4.0/operator.yaml

@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
@@ -33,6 +33,7 @@ repos:
         name: Lint YAML files
         args:
           - --format=parsable
+          - --config-data=relaxed
   - repo: https://github.com/pecigonzalo/pre-commit-shfmt
     rev: v2.1.0
     hooks:

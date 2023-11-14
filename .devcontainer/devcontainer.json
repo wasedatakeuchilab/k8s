@@ -1,10 +1,8 @@
 {
   "name": "Debian",
   "image": "mcr.microsoft.com/vscode/devcontainers/base:debian",
-  "mounts": [],
-  "runArgs": [],
   "features": {
-    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+    "ghcr.io/devcontainers-contrib/features/apt-packages:1": {
       "packages": "bash-completion"
     },
     "ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
@@ -13,11 +11,11 @@
   },
   "customizations": {
     "vscode": {
-      "settings": {},
       "extensions": [
         "bierner.markdown-mermaid",
-        "github.vscode-github-actions",
         "esbenp.prettier-vscode",
+        "github.vscode-github-actions",
+        "GitHub.vscode-pull-request-github",
         "ms-azuretools.vscode-docker",
         "ms-kubernetes-tools.vscode-kubernetes-tools",
         "redhat.vscode-yaml",
@@ -30,7 +28,6 @@
     "install pre-commit": "pre-commit install",
     "install kubectl-completion": "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
   },
-  "remoteUser": "vscode",
   "remoteEnv": {
     "KUBECONFIG": ".devcontainer/kubeconfig"
   }
